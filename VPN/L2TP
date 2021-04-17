@@ -1,0 +1,32 @@
+BR-R
+aaa new-model
+aaa authentication login l2tp local
+aaa authentication ppp l2tp local
+aaa authorization network l2tp local if-authenticated
+
+vpdn enable
+vpdn-group l2tp
+
+accept-dialin
+protocol l2tp
+virtual-template 1
+exit 
+no l2tp tunnel authentication
+!
+crypto isakmp policy 20
+encr 3des
+authentication pre-share
+group 2
+crypto isakmp key Pa$$worD address 0.0.0.0 0.0.0.0 no-xauth
+crypto ipsec transform-set l2tp-trset esp-3des esp-sha-hmac
+mode transport
+!
+crypto dynamic-map l2tp-dynamic 10
+set transform-set l2tp-trset
+crypto map l2tp-map 10 ipsec-isakmp dynamic l2tp-dynamic
+interface Virtual-Template1
+ip unnumbered gig0/1.100
+peer default ip address pool l2tp-pool
+ppp mtu adaptive
+ppp authentication ms-chap ms-chap-v2 l2tp
+ip local pool l2tp-pool 100.50.0.100 100.50.0.150
