@@ -1,0 +1,50 @@
+	DHCP
+BR-R
+conf t
+ip dhcp pool DHCP
+network 100.40.0.0 255.255.255.0
+default-router 100.40.0.254
+dns-server 100.40.0.1
+exit
+ip dhcp pool DHCP2
+network 100.50.0.0 255.255.255.0
+default-router 100.50.0.254
+dns-server 100.40.0.1
+option 150 ip 100.50.0.254
+exit
+ip dhcp excluded-address 100.40.0.1 100.40.0.1
+ip dhcp excluded-address 100.40.0.254 100.40.0.254
+ip dhcp excluded-address 100.50.0.254 100.50.0.254
+ipv6 dhcp pool DHCPv6
+address prefix 2002:6000::/64
+dns-server 2002:1000::1
+exit
+int gig0/1.200
+ipv6 dhcp server DHCPv6
+ipv6 nd managed-config-flag
+ipv6 nd prefix default 14400 14400 no-autoconfig
+
+HQ-R
+Conf t
+ipv6 dhcp pool DHCPv6
+address prefix 2002:2000::/64
+dns-server 2002:1000::1
+exit
+int gig0/1.10
+ipv6 dhcp server DHCPv6
+int gig0/1.20
+ipv6 nd prefix default 14400 14400 no-autoconfig
+ipv6 nd ra suppress all
+ip dhcp pool DHCP
+network 100.30.0.0 255.255.255.0
+default-router 100.30.0.254
+dns-server 100.40.0.1
+option 150 ip 100.30.0.254
+exit
+
+HQ-FW
+Conf t
+Ipv6 dhcprelay enable inside
+Ipv6 dhcprelay server 2002:3000::ffff outside
+Int Vlan 2
+Ipv6 nd prefix default no-autoconfig
