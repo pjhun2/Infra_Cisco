@@ -1,0 +1,72 @@
+	Anyconnect VPN
+HQ-FW
+conf t
+dns domain-lookup DMZ
+domain-name worldskills.kazan
+dns name-server 2002:1000::1
+crypto key generate rsa general-keys label KEY modulus 1024
+crypto ca trustpoint VPN-TP
+enrollment terminal
+no revocation-check
+fqdn vpn.worldskills.kazan
+subject-name CN=vpn.worldskills.kazan
+keypair KEY
+exit
+crypto ca enroll VPN-TP
+:yes
+:no
+:yes
+:no
+
+ca
+※터미널에 나온 인증서 요청을 복사하여 ca에 /etc/ssl/vpn.req 파일로 만듦.
+ 
+#openssl ca –in vpn.req –out vpn.crt
+
+Radius
+#cd /home/Switch
+#scp [2002:AAAA::100.40.0.1]:/etc/ssl/vpn.crt vpn.txt
+#cp /etc/ssl/cacert.pem cacert.txt
+#vim vpn.txt
+※아래와 같이 코드 형식만 남김.
+ 
+#vim cacert.txt
+※아래와 같이 코드 형식만 남김.
+ 
+
+HQ-FW
+conf t
+crypto ca authenticate VPN-TP
+※여기에 cacert.txt파일의 내용을 복사.
+quit
+:yes
+crypto ca import VPN-TP certificate
+:yes
+※여기에 vpn.txt 파일의 내용을 복사
+quit
+ssl trust-point VPN-TP
+username cisco password Pa$$worD privilege 15
+ipv6 local pool REMOTE 2002:BBBB::100/64 50 
+webvpn
+enable outside
+anyconnect image disk0:/anyconnect-win-4.5.04029-webdeploy-k9.pkg
+anyconnect enable
+tunnel-group-list enable
+group-policy REMOTE internal
+group-policy REMOTE attributes
+dns-server value 2002:1000::1
+vpn-tunnel-protocol ssl-client
+ipv6-split-tunnel-policy tunnelall
+ipv6-address-pools value REMOTE
+vpn-simultaneous-logins 1
+tunnel-group REMOTE type remote-access
+tunnel-group REMOTE general-attributes
+authentication-server-group LOCAL
+default-group-policy REMOTE
+tunnel-group REMOTE webvpn-attributes
+group-alias GROUP enable
+
+Remote-Client
+※Remote-Client에 Anyconnect 프로그램 설치 후 진행
+ 
+ 
