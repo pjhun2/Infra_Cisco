@@ -1,0 +1,92 @@
+	Vocie Networking
+Radius
+※제공된 음원 파일을 /home/Switch에 옮긴 후 진행
+#touch /home/Switch/RingList.xml
+#vim /home/Switch/RingList.xml
+ 
+
+HQ-R
+conf t
+voice service voip
+allow-connections sip to sip
+sip
+registrar server
+bind control source-interface gig0/1.30
+no call service stop
+voice register global
+mode cme
+source-address 100.30.0.254 port 5060
+max-dn 2
+max-pool 2
+tftp-path flash:
+voice register dn 1
+number 4001
+name 4001
+label 4001
+allow watch
+voice register dn 2
+number 4002
+name 4002
+label 4002
+allow watch
+call-forward b2bua noan 4001 timeout 10
+voice register pool 1
+id mac <hq-phone의 MAC 주소>
+type 7962
+number 1 dn 1
+codec g711ulaw
+voice register pool 2
+id mac <hq-client의 MAC 주소>
+number 1 dn 2
+codec g711ulaw
+type 7970
+exit
+voice register global
+create profile
+dial-peer voice 7001 voip
+destination-pattern 7001
+session target ipv4:100.50.0.254
+dtmf-relay rtp-nte
+codec g711ulaw
+session protocol sipv2
+end
+copy ftp://ftpuser:Pa$$worD@2002:1000::1 flash:Ringlist.xml
+copy ftp://ftpuser:Pa$$worD@2002:1000::1 flash:hello.raw
+conf t
+tftp-server flash:Ringlist.xml
+tftp-server flash:hello.raw
+
+BR-R
+conf t
+voice service voip
+allow-connections sip to sip
+sip
+registrar server
+bind control source-interface gig0/1.400
+no call service stop
+voice register global
+mode cme
+source-address 100.50.0.254 port 5060
+max-dn 1
+max-pool 1	
+tftp-path flash:
+date-format Y-M-D
+voice register dn 1
+number 7001
+name 7001
+label 7001
+allow watch
+voice register pool 1
+id mac <BR-Phone의 MAC 주소>
+type 7962
+number 1 dn 1
+codec g711ulaw
+exit
+voice register global
+create profile
+dial-peer voice 4000 voip
+destination-pattern 400.
+session target ipv4:100.30.0.254
+dtmf-relay rtp-nte
+codec g711ulaw
+session protocol sipv2
