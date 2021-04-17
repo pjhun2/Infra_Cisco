@@ -1,0 +1,66 @@
+인증기관 설정.
+VPN(config)#crypto pki server SKILLS-CA
+VPN(cs-server)#database url flash:ca
+VPN(cs-server)#database level complete
+VPN(cs-server)#no shut
+VPN(cs-server)#exit
+VPN(config)#ip http server
+VPN(config)#crypto key generate rsa general-keys modulus 1024 label SSLVPN exportable
+VPN(config)#crypto pki trustpoint SSLVPN-TP
+VPN(ca-trustpoint)#enrollment url http://192.168.0.254
+VPN(ca-trustpoint)#revocation-check none
+VPN(ca-trustpoint)#subject-name CN=SSL-VPN
+VPN(ca-trustpoint)#rsakeypair SSLVPN
+VPN(ca-trustpoint)#exit
+VPN(config)#crypto pki enroll SSL-VPN-TP
+VPN(config)#crypto pki authenticate SSLVPN-TP
+VPN(config)#crypto pki enroll SSLVPN-TP
+
+
+
+
+VPN 설정
+VPN(config)#webvpn gateway SSLVPN_GW
+VPN(config-webvpn-gateway)#ip address 218.159.40.10 port 443
+VPN(config-webvpn-gateway)#http-redirect port 80
+VPN(config-webvpn-gateway)#ssl trustpoint SSLVPN-TP
+VPN(config-webvpn-gateway)#inservice
+VPN(config-webvpn-gateway)#exit
+VPN(config)#webvpn context SSLVPN_Context
+VPN(config-webvpn-context)#gateway SSLVPN_GW
+VPN(config-webvpn-context)#login-message "WelCome to School"
+VPN(config-webvpn-context)#default-group-policy SSLVPN_Policy
+VPN(config-webvpn-context)#inservice
+VPN(config-webvpn-context)#exit
+VPN(config)#aaa new-model
+VPN(config)#aaa authentication login SSLVPN local
+VPN(config)#webvpn context SSLVPN_Context
+VPN(config-webvpn-context)#aaa authentication list SSLVPN
+VPN(config-webvpn-context)#policy group SSLVPN_Policy
+VPN(config-webvpn-group)#exit
+VPN(config-webvpn-context)#url-list "SkillsClientless"
+VPN(config-webvpn-url)#url-text "Intranet" url-value "http://192.168.0.50"
+VPN(config-webvpn-url)#exit
+VPN(config-webvpn-context)#policy group SSLVPN_Policy
+VPN(config-webvpn-group)#url-list "SkillsClientless"
+VPN(config-webvpn-url)#heading "Skills URL"
+
+VPN(config-webvpn-context)#default-group-policy SSLVPN_Policy
+VPN(config)#username vpnuser password Skills39
+
+위처럼 url-list에 heading을 저런식으로 추가하면 사이트 북마크에 표시가 된다.
+
+ 
+ 
+생성한 유저로 로그인
+ 
+
+
+Thin 모드 설정
+저 설정에서 이 부분을 추가 해준다.
+VPN(config-webvpn-context)#port-forward "SSLVPN_PF"
+VPN(config-webvpn-port-fwd)# local-port 5000 remote-server "192.168.0.50" remote-port 22 description "Skills SSH"
+VPN(config-webvpn-port-fwd)#exit
+VPN(config-webvpn-context)#policy group SSLVPN_Policy
+VPN(config-webvpn-group)#port-forward "SSLVPN_PF" auto-download
+VPN(config-webvpn-group)#do wr
