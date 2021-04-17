@@ -1,0 +1,46 @@
+	NAT-PT & NAT64
+1)	NAT-PT
+HQ-R
+conf t
+no ip cef
+no ipv6 cef
+int gig0/0
+ipv6 nat
+int gig0/1.10
+ipv6 nat
+int gig0/1.20
+ipv6 nat
+int tun 0
+ipv6 nat
+exit
+ipv6 nat prefix 2002:AAAA::/96 v4-mapped v6
+ipv6 access-list v6
+permit ipv6 any any
+exit
+ipv6 nat v6v4 source list v6 interface gig0/0 overload
+no ipv6 nat service DNS
+ipv6 nat v6v4 source 2002:3000::1 100.10.0.3
+ipv6 nat v6v4 source 2002:1000::1 100.10.0.2
+
+2)	NAT64
+HQ-R
+conf t
+no ip cef
+no ipv6 cef
+int gig0/0
+nat64 enable
+int gig0/1.10
+nat64 enable
+int gig0/1.20
+nat64 enable
+int tun0
+nat64 enable
+exit
+ipv6 access-list NAT
+permit ipv6 any any
+exit
+nat64 prefix stateful 2002:AAAA::/96
+nat64 v4 pool NAT 200.0.0.50 200.0.0.60
+nat64 v6v4 list NAT pool NAT overload
+nat64 v6v4 static 2002:1000::1 100.10.0.2
+nat64 v6v4 static 2002:3000::1 100.10.0.3
