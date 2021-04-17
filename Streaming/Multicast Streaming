@@ -1,0 +1,39 @@
+Multicast Routing & Media Streaming
+Now: ISP
+#apt-get install quagga-pimd
+#cp /usr/share/doc/quagga-core/example/pimd.conf.smaple /etc/quagga/pimd.conf
+#vi /etc/quagga/pimd.conf
+ 
+ 
+#service zebra restart ; service pimd restart
+
+Now: HQ-R
+conf t
+ip multicast-routing
+Ip pim rp-address 100.20.0.1
+Int gig0/0
+Ip pim sparse-mode
+Int gig0/1.30
+Ip pim sparse-mode
+Ip igmp join-group 239.1.1.1
+
+BR-R
+conf t
+ip multicast-routing
+Ip pim rp-address 100.20.0.1
+Int gig0/0
+Ip pim sparse-mode
+Int gig0/1.100
+Ip pim sparse-mode
+Ip igmp join-group 239.1.1.1
+
+HQ-Client, Remote-Client에서 배포자료 “vlc-2.2.4-win32”를 복사 후 실행
+HQ-Client에는 “Wildlife.mp4”도 복사
+Now: HQ-Client, Remote-Client
+  
+; 전부 기본값을 사용하여 설치
+Now: HQ-Client
+; HQ-Client에서 설치된 “VLC media player”를 실행
+ 
+  
+  
