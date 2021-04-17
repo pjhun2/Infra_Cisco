@@ -1,0 +1,275 @@
+#basic Configure
+
+Basic Configuration
+HQ-FW를 제외한 모든 장비
+conf t
+enable password Pa$$worD	
+service password-encryption
+clock timezone KST 9 0
+
+HQ-FW
+conf t
+enable password Pa$$worD
+clock timezone KST 9 0
+
+L2 Configuration
+HQ-SW
+conf t
+Int range fa0/21-22
+Channel-group 1 mode auto
+Int range fa0/23-24
+Channel-group 2 mode active
+
+BR-SW
+conf t
+Int range fa0/21-22
+Channel-group 1 mode desirable
+Int range fa0/23-24
+Channel-group 2 mode passive
+
+HQ-SW
+conf t
+Vlan 10
+name OUTSIDE
+Vlan 20
+name HQ-MANAGE
+Vlan 30
+name HQ-VOICE
+Vlan 40
+name INSIDE
+Vlan 100
+name INTERNET
+Vlan 200
+name BRANCH
+Vlan 300
+name BR-MANAGE
+Vlan 400
+name BR-VOICE
+exit
+int fa0/19
+sw mode access
+sw access Vlan 10
+int range fa0/1-12
+sw mode access
+sw access Vlan 40
+int range fa0/13-18
+sw mode access
+sw access Vlan 100
+int port-channel 1
+sw mode trunk
+int port-channel 2
+sw mode trunk
+int fa0/20
+sw mode trunk
+exit
+vtp domain KAZAN
+vtp version 3
+vtp password Pa$$worD
+exit
+vtp primary
+
+BR-SW
+conf t
+vtp domain KAZAN
+vtp version 3
+vtp password Pa$$worD
+※몇초 기다린 후
+int range fa0/1-6
+sw mode ac
+sw access Vlan 40
+int range fa0/7-12
+sw mode ac
+sw access Vlan 30
+int range fa0/13-14
+sw mode ac
+sw access Vlan 200
+int range fa0/15-18
+sw mode ac
+sw access Vlan 400
+
+HQ-SW
+conf t
+int port-channel 1
+switchport trunk allowed Vlan 	10,20,30,40
+switchport trunk native Vlan 40
+int port-channel 2
+switchport trunk allowed Vlan 	100,200,300
+switchport trunk native Vlan 300
+int fa0/20
+sw mode trunk
+switchport trunk allowed Vlan 	10,20,30
+exit
+spanning-tree Vlan 30 root primary
+spanning-tree portfast default
+int range fa0/1-12
+sw protected
+
+BR-SW
+conf t
+int port-channel 1
+sw mode trunk
+switchport trunk allowed Vlan 	10,20,30,40
+switchport trunk native Vlan 40
+int port-channel 2
+sw mode trunk
+switchport trunk allowed Vlan 	100,200,300
+switchport trunk native Vlan 300
+int fa0/20
+sw mode trunk
+switchport trunk allowed Vlan 	100,200,300,400
+switchport trunk native Vlan 300
+exit	
+spanning-tree Vlan 300 root primary
+spanning-tree portfast default
+int range fa0/1-6
+sw protected
+int fa0/14
+sw port-security
+sw port-security mac-address sticky
+sw port-security violation shutdown
+
+HQ-SW, BR-SW
+conf t
+sdm prefer dual-ipv4-and-ipv6 default
+do reload
+
+HQ-SW
+conf t
+int Vlan 20
+ipv6 address 2002:4000::1/64
+ipv6 enable
+no shut
+exit
+ipv6 route ::/0 2002:4000::ffff
+
+BR-SW
+conf t
+int Vlan 300
+ipv6 address 2002:7000::1/64
+ipv6 enable
+no shut
+int fa0/2
+sw voice Vlan 30
+exit
+ipv6 route ::/0 2002:7000::ffff
+
+
+HQ-R
+conf t
+ipv6 unicast-routing
+int lo 100
+ip address 200.10.0.1 255.255.255.255
+int gig0/0
+no shut
+ip address 100.10.0.1 255.255.255.0
+int gig0/1
+no shut
+int gig0/1.10
+encapsulation dot1q 10
+ipv6 address 2002:3000::ffff/64
+ipv6 enable
+int gig0/1.20
+encapsulation dot1q 20
+ipv6 address 2002:4000::ffff/64
+ipv6 enable
+int gig0/1.30
+encapsulation dot1q 30
+ip add 100.30.0.254 255.255.255.0
+exit
+username BR-R password Pa$$worD
+int multilink 1
+ipv6 address 2002:5000::1/64
+ipv6 enable
+ppp authentication chap
+int s0/0/0
+no shut
+no ip add
+encapsulation ppp
+ppp multilink group 1
+int s0/0/1
+no shut
+no ip add
+encapsulation ppp
+ppp multilink group 1
+
+BR-R
+conf t
+ipv6 unicast-routing
+int lo 100
+ip address 200.30.0.1 255.255.255.255
+int gig0/0
+no shut	
+ip address 100.20.0.1 255.255.255.0
+int gig0/1
+no shut
+int gig0/1.100
+encapsulation dot1q 100
+ip address 100.40.0.254 255.255.255.0 
+int gig0/1.200
+encapsulation dot1q 200
+ipv6 address 2002:6000::ffff/64
+ipv6 enable
+int gig0/1.300
+encapsulation dot1q 300 native
+ipv6 address 2002:7000::ffff/64
+ipv6 enable
+exit
+int gig0/1.400
+encapsulation dot1q 400
+ip address 100.50.0.254 255.255.255.0
+exit
+username HQ-R password Pa$$worD
+int multilink 1
+ipv6 address 2002:5000::2/64
+ipv6 enable
+ppp authentication chap
+int s0/0/0
+no shut
+no ip add
+encapsulation ppp
+ppp multilink group 1
+int s0/0/1
+no shut
+no ip add
+encapsulation ppp
+ppp multilink group 1
+
+HQ-FW
+conf t
+policy-map global_policy
+class inspection_default
+inspect icmp
+exit
+exit
+no object network obj_any
+no dhcpd auto_config outside
+no dhcpd address 192.168.1.5-192.168.1.36 inside
+no dhcpd enable inside
+int Vlan 1
+no nameif
+int Vlan 2
+no nameif
+int Vlan 1
+nameif outside
+security-level 0
+ipv6 address 2002:3000::1/64
+ipv6 enable
+exit
+int Vlan 2
+nameif inside
+security-level 100
+ipv6 address 2002:2000::ffff/64
+ipv6 enable
+int Vlan 3
+no forward interface Vlan 1
+nameif dmz
+security-level 50
+ipv6 address 2002:1000::ffff/64
+ipv6 enable
+int e0/0
+sw access Vlan 1
+int e0/1
+sw access Vlan 2
+int e0/2
+sw access Vlan 3
+exit
