@@ -1,0 +1,30 @@
+	IP SLA
+HQ-R
+conf t
+int multilink 1
+shut
+exit
+ip sla logging traps
+ip sla 1
+icmp-echo 200.30.0.1
+threshold 2
+timeout 1000
+frequency 3
+exit
+ip sla schedule 1 life forever start-time now
+ip sla enable reaction-alerts
+track 1 ip sla 1 reachability
+exit 
+event manager applet down
+event syslog pattern " %TRACK-6-STATE: 1 ip sla 1 reachability Up -> Down"
+action 0.1 cli command "enable"
+action 0.2 cli command "conf t"
+action 0.3 cli command "int multilink 1"
+action 0.4 cli command "no shutdown"
+exit
+event manager applet up
+event syslog pattern " %TRACK-6-STATE: 1 ip sla 1 reachability Down -> Up"
+action 0.1 cli command "enable"
+action 0.2 cli command "conf t"
+action 0.3 cli command "int multilink 1"
+action 0.4 cli command "shutdown"
