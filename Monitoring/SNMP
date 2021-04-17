@@ -1,0 +1,6 @@
+	Monitoring
+HQ-R, BR-R, HQ-SW, BR-SW
+conf t
+snmp-server community snmp_ro RO
+snmp-server location Busan, Korea
+snmp-server contact admin@worldskills.kazan
