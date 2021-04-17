@@ -1,0 +1,84 @@
+ISP
+#apt-get –y install quagga
+#cp /usr/share/doc/quagga-core/examples/zebra.conf.sample /etc/quagga/zebra.conf
+#cp /usr/share/doc/quagga-core/examples/ospfd.conf.sample /etc/quagga/ospfd.conf
+#chown quagga:quagga -R /etc/quagga/
+#systemctl restart zebra ospfd
+#telnet localhost 2604
+:zebra
+>en
+#conf t
+#router ospf 
+#network 100.10.0.0/24 area 0
+#network 100.20.0.0/24 area 0
+#network 200.20.0.1/32 area 0
+#wr
+#exit
+#systemctl restart zebra ospfd
+
+HQ-R
+conf t
+router ospf 1
+network 100.10.0.0 0.0.0.255 a 0
+network 200.10.0.1 0.0.0.0 a 0
+network 100.30.0.0 0.0.0.255 a 0
+default-information originate always 
+exit
+Ipv6 route 2002:1000::/64 2002:3000::1
+Ipv6 route 2002:2000::/64 2002:3000::1
+ipv6 router Eigrp 10
+Eigrp router-id 200.10.0.1
+Redistribute static
+Exit
+Int gig0/1.20
+Ipv6 Eigrp 10
+Int multilink 1
+Ipv6 Eigrp 10
+Exit
+
+BR-R
+conf t
+router ospf 1
+network 100.20.0.0 0.0.0.255 a 0
+network 100.40.0.0 0.0.0.255 a 0
+network 100.50.0.0 0.0.0.255 a 0
+network 200.30.0.1 0.0.0.0 a 0
+exit
+ipv6 router Eigrp 10
+Eigrp router-id 200.30.0.1
+Exit
+Int gig0/1.200
+Ipv6 Eigrp 10
+Int gig0/1.300
+Ipv6 Eigrp 10
+Int multilink 1
+Ipv6 Eigrp 10
+exit
+
+HQ-FW
+conf t
+ipv6 route outside ::/0 2002:3000::ffff
+access-list OUT permit icmp6 any6 2002:1000::/64
+access-group OUT in interface outside
+
+	Ipv6 to ipv4 Tunneling
+HQ-R
+conf t
+int tunnel 0
+tunnel source lo100
+ipv6 address 2002:8000::1/64
+tunnel destination 200.30.0.1
+ipv6 enable
+ipv6 Eigrp 10
+exit
+
+BR-R
+conf t
+int tunnel 0
+tunnel source lo100
+ipv6 address 2002:8000::2/64
+tunnel destination 200.10.0.1
+ipv6 enable
+ipv6 Eigrp 10
+exit
+ipv6 route 2002:AAAA::/96 tunnel 0
