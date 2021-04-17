@@ -1,0 +1,12 @@
+	ISATAP Tunneling
+BR-R
+Conf t
+interface tunnel 10
+tunnel source g0/1.100
+tunnel mode ipv6ip isatap
+ipv6 address 2001:1000::/64 eui-64
+no ipv6 nd ra suppress
+
+remote-client
+※powershell 관리자 권한으로 실행 후, 아래와 같이 입력
+>netsh interface isatap set router 100.40.0.254
