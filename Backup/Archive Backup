@@ -1,0 +1,6 @@
+	Archive Backup
+HQ-R, BR-R, HQ-SW, BR-SW
+conf t 
+archive
+path ftp://ftpuser:Pa$$worD@2002:1000::1/$h
+write-memory
